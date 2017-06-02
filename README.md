@@ -1,0 +1,2 @@
+# many_worker_cron_php
+php启动多进程跑cron脚本
