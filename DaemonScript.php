@@ -557,4 +557,8 @@ class Comm_DaemonScript {
         fclose($fo);
         return trim($cts);
     }
+
+    public static function my_log($msg) {
+        error_log($msg . "\n", 3, '/tmp/log.log');
+    }
 }
