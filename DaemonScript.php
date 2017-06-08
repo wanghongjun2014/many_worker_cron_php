@@ -8,19 +8,19 @@
  *     $daemon->daemonize();
  *     $daemon->start(1); //开进程数
  *   注意kill的时候请使用 15信号，9程序不能捕获
- * 
+ *
  *     额外功能
  *        1.可以设置 子进程的超时时间，超时自动查杀后再启动
  *        2.整个daemon退出（会等待所有子进程处理退出状态 才会退出）
- * 
+ *
  * @author xuyong5
  * @version 1.0
- *    
+ *
  */
 class Comm_DaemonScript {
-    
-    /**  the stock default directory privdata 
-     *   default get PRIVATE_DATA_PATH constant 
+
+    /**  the stock default directory privdata
+     *   default get PRIVATE_DATA_PATH constant
      */
     private static $runtime_dir   = '/data1/www/privdata/stock.weibo.com/';
     public  static $log_dir_name  = 'daemon_log';
@@ -46,9 +46,6 @@ class Comm_DaemonScript {
      * @param bool   $skill 强列重启
      */
     public function __construct($pid_file = null, $log_file = null,$skill = false) {
-        if(defined(PRIVATE_DATA_PATH)){
-            self::$runtime_dir = PRIVATE_DATA_PATH; 
-        } 
         $this->_info_dir = rtrim(self::$runtime_dir,'/').DIRECTORY_SEPARATOR.self::$log_dir_name;
         if(!is_dir($this->_info_dir)){
             @mkdir($this->_info_dir, 0777,true);
@@ -168,10 +165,10 @@ class Comm_DaemonScript {
                     }
                 }
                 break;
-                
+
         }
     }
-    
+
     public function daemonize() {
         set_time_limit(0);
 
@@ -180,7 +177,7 @@ class Comm_DaemonScript {
             exit("only run in cli mode'");
         }
 
-        $this->_checkPidFile();
+        //$this->_checkPidFile();
 
         // set umask 0
         umask(0);
@@ -285,7 +282,7 @@ class Comm_DaemonScript {
             $this->log('delete pid file ' . $pidFile);
         }
     }
-    
+
     /**
      * delete monitorFile
      * @return void
@@ -300,7 +297,7 @@ class Comm_DaemonScript {
 
     /**
      * delete clhldQuit log file
-     * @return void 
+     * @return void
      */
     private function _deleteChldQuitFile() {
         $chldQuit = $this->_child_quit;
@@ -344,12 +341,12 @@ class Comm_DaemonScript {
             if (function_exists('pcntl_signal_dispatch')) {
                 pcntl_signal_dispatch();
             }
-            
+
             //exit
             if ($this->_terminate) {
                 break;
             }
-            
+
             //fork 
             if ($this->_workers_count < $count) {
                 $pid = pcntl_fork();
@@ -361,7 +358,7 @@ class Comm_DaemonScript {
                     return;
                 }
             }
-            
+
             //check shutdown signal
             if($shutdownWorkers = $this->_getShutdown()){
                 if(count($shutdownWorkers) == $this->count){
@@ -370,7 +367,7 @@ class Comm_DaemonScript {
                     break;
                 }
             }
-            
+
             //check child max running time 
             if($this->_max_time !== 0){
                 if(file_exists($this->monitor)){
@@ -379,7 +376,7 @@ class Comm_DaemonScript {
                         foreach ($monitor as $_pid => $utime) {
                             if (( time() - $utime ) > $this->_max_time) {
                                 posix_kill($_pid, SIGTERM);
-                            } 
+                            }
                         }
                     }
                     $monitor = null;
@@ -394,7 +391,7 @@ class Comm_DaemonScript {
 
     /**
      * set max running time
-     * @param  int $time （second） 
+     * @param  int $time （second）
      */
     public function setMaxTime($time) {
         $this->_max_time = (int) $time;
@@ -402,7 +399,7 @@ class Comm_DaemonScript {
 
     /**
      * update running time
-     * @param int $pid  
+     * @param int $pid
      * @param string $monitor (filename)
      * @return void
      */
@@ -432,7 +429,7 @@ class Comm_DaemonScript {
         $size   = 0;
         return;
     }
-    
+
     /**
      * remove quit process monitoring
      * @param int $pid
@@ -451,7 +448,7 @@ class Comm_DaemonScript {
             @file_put_contents($this->monitor, json_encode($arr),LOCK_EX);
             $arr = null;
             return;
-        } 
+        }
     }
 
     private function _mainQuit() {
@@ -499,7 +496,7 @@ class Comm_DaemonScript {
     }
 
     /**
-     * get child signal 
+     * get child signal
      * @return int
      */
     public function _getShutdown() {
@@ -532,7 +529,7 @@ class Comm_DaemonScript {
             }
         }
         return false;
-        
+
     }
 
     public function childQuitLog($pid) {
@@ -545,20 +542,19 @@ class Comm_DaemonScript {
         error_log($message, 3, $this->_log_file);
     }
 
-    public static function getContents($path) { 
+    public static function getContents($path) {
         if (!file_exists($path)) {
             return false;
-        } 
+        }
         $fo     = fopen($path, 'r');
         $locked = flock($fo, LOCK_SH|LOCK_NB);
         if (!$locked) {
             fclose($fo);
             return false;
-        } 
+        }
         $cts = file_get_contents($path);
         flock($fo, LOCK_UN);
         fclose($fo);
         return trim($cts);
     }
 }
-
