@@ -143,13 +143,17 @@ class Comm_DaemonScript {
         switch ($signo) {
             // terminate the process
             case SIGTERM:
+                $this->my_log('信号SIGTERM');
             case SIGINT:
+                $this->my_log('信号SIGINT');
             case SIGQUIT:
+                $this->my_log('信号SIGTQUIT');
                 $this->_terminate = true;
                 break;
 
             // child process exists
             case SIGCHLD:
+                $this->my_log('信号SIGCHLD');
                 while (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
                     $this->_workers_count--;
                     $this->removeMonitor($pid);
@@ -158,6 +162,7 @@ class Comm_DaemonScript {
 
             // fork more children
             case SIGUSR1:
+                $this->my_log('信号SIGUSR1');
                 if ($this->_workers_count < $this->_workers_max) {
                     $pid = pcntl_fork();
                     if ($pid > 0) {
@@ -359,6 +364,7 @@ class Comm_DaemonScript {
                 }
             }
 
+            /*
             //check shutdown signal
             if($shutdownWorkers = $this->_getShutdown()){
                 if(count($shutdownWorkers) == $this->count){
@@ -382,10 +388,11 @@ class Comm_DaemonScript {
                     $monitor = null;
                 }
             }
+            */
             sleep(1);
         }
 
-        $this->_mainQuit();
+       // $this->_mainQuit();
         exit();
     }
 
@@ -558,7 +565,7 @@ class Comm_DaemonScript {
         return trim($cts);
     }
 
-    public static function my_log($msg) {
+    public function my_log($msg) {
         error_log($msg . "\n", 3, '/tmp/log.log');
     }
 }

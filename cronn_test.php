@@ -1,4 +1,5 @@
 <?php
+/*
 require 'DaemonScript.php';
 
 $daemon = new Comm_DaemonScript(__CLASS__, __CLASS__, false);
@@ -14,4 +15,10 @@ function my_log($msg) {
     error_log($msg . "\n", 3, '/tmp/log.log');
 }
 
-sleep(100);
+sleep(1000);
+
+*/
+
+require 'ManyWorkerScript.php';
+
+
