@@ -19,9 +19,8 @@
 
 
 require 'ManyWorkerScript.php';
-
 $obj = new ManyWorkerScript();
 $obj->main(5);
 
-sleep(100);
+sleep(60);
 

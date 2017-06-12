@@ -15,10 +15,18 @@ class ManyWorkerScript {
     public static $_killChangeProcessResult = false; // 杀死某个正在运行的进程是否影响结果, 默认不影响 .
 
     public static $_currentWorkerNum = 0; // 当前正在运行的进程数 .
+
+    /**
+     * ManyWorkerScript constructor.
+     * init初始化的一些东西
+     */
     public function __construct()
     {
-        // init初始化的一些东西 .
+        // 检查pcntl扩展.
         self::checkPcntl();
+
+        // 注册信号处理机制 .
+        self::registerSignal();
     }
 
 
@@ -87,26 +95,66 @@ class ManyWorkerScript {
                 pcntl_signal_dispatch();
             }
 
-            // fork出指定数量的进程  .
+            // fork出指定数量的进程 .
             if (self::$_currentWorkerNum < $workerNum) {
                 $pid = pcntl_fork();
                 if ($pid > 0) {
                     self::$_currentWorkerNum++;
                 } elseif ($pid == 0){
-                    //子进程直接退出了, 不要重复fork
+                    //todo 子进程是否需要重新注册信号处理, 需要验证
+                    // self::childRegisterSignal();
                     return ;
                 } else {
                     exit('fork fatal error');
                     break;
                 }
+            } else {
+                break;
             }
 
             sleep(1);
         }
     }
+
+    public static function registerSignal()
+    {
+        pcntl_signal(SIGTERM, "self::signalHandle");
+        pcntl_signal(SIGCHLD, "self::signalHandle");
+    }
+
+    public static function childRegisterSignal()
+    {
+        pcntl_signal(SIGTERM, "self::signalHandle");
+        pcntl_signal(SIGCHLD, "self::signalHandle");
+    }
+
+    /**
+     * @param $signal
+     */
+    public static function signalHandle($signal)
+    {
+        switch ($signal) {
+            case SIGTERM:
+                // kill杀死进程(kill -15优雅的杀死)时 .
+                self::errorLog("某个进程被杀死\n");
+                break;
+
+            case SIGCHLD:
+                // 子进程结束(或者意外退出的时候会向父进程发送该信号) .
+                self::errorLog("某个子进程正常结束了\n");
+                break;
+
+            // 其他信号, 想到再加上
+            default:
+                self::errorLog("此" . $signal ."信号没有在程序中注册使用\n");
+                break;
+        }
+    }
+
     /**
      * @param $message
-     * return null
+     * @param $isKill
+     * message字符串格式, isKill 表示打log之后是否终止程序的执行
      */
     public static function errorLog($message, $isKill = false) {
         error_log($message . "\n", 3, self::$_debugLog);
