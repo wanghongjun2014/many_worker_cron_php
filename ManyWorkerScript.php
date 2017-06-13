@@ -16,6 +16,10 @@ class ManyWorkerScript {
 
     public static $_currentWorkerNum = 0; // 当前正在运行的进程数 .
 
+    public static $_maxChildTime = 0; // 子进程的最大超时时间, 0表示无时间限制 .
+
+    public static $_childAutoRestart = true; // 子进程退出时(包含kill -15掉)是否自动重新启动, 会造成无限fork子进程
+
     /**
      * ManyWorkerScript constructor.
      * init初始化的一些东西
@@ -102,16 +106,12 @@ class ManyWorkerScript {
                     self::$_currentWorkerNum++;
                 } elseif ($pid == 0){
                     //todo 子进程是否需要重新注册信号处理, 需要验证
-                    // self::childRegisterSignal();
                     return ;
                 } else {
                     exit('fork fatal error');
                     break;
                 }
-            } else {
-                break;
             }
-
             sleep(1);
         }
     }
@@ -135,13 +135,22 @@ class ManyWorkerScript {
     {
         switch ($signal) {
             case SIGTERM:
-                // kill杀死进程(kill -15优雅的杀死)时 .
+                // kill杀死父进程(kill -15优雅的杀死)时 .
                 self::errorLog("某个进程被杀死\n");
                 break;
 
             case SIGCHLD:
-                // 子进程结束(或者意外退出的时候会向父进程发送该信号) .
+
+                // 子进程正常结束(或者用kill -15杀死子进程的时候会向父进程发送该信号, ps: 用kill杀死子进程的时候并不会发送SIGTERM信号) .
                 self::errorLog("某个子进程正常结束了\n");
+
+                // 下面的$childPid表示退出的子进程的pid
+                while (($childPid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
+                    if (self::$_childAutoRestart) {
+                        self::$_currentWorkerNum--;
+                    }
+                }
+
                 break;
 
             // 其他信号, 想到再加上
