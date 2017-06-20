@@ -7,6 +7,7 @@
 //$daemon->daemonize();
 //
 //$daemon->start(5);
+//
 ////$pid     = posix_getpid();
 ////$monitor = $daemon->getMonitorFile();
 ////$daemon->updateRunTime($pid, $monitor);
@@ -22,5 +23,5 @@ require 'ManyWorkerScript.php';
 $obj = new ManyWorkerScript();
 $obj->main(5);
 
-sleep(60);
+sleep(40);
 

@@ -118,8 +118,10 @@ class ManyWorkerScript {
 
     public static function registerSignal()
     {
-        pcntl_signal(SIGTERM, "self::signalHandle");
-        pcntl_signal(SIGCHLD, "self::signalHandle");
+        pcntl_signal(SIGTERM, SIG_DFL);
+        pcntl_signal(SIGCHLD, "self::signalHandle", false);
+        pcntl_signal(SIGINT, "self::signalHandle", false);
+        pcntl_signal(SIGQUIT, "self::signalHandle", false);
     }
 
     public static function childRegisterSignal()
@@ -134,6 +136,14 @@ class ManyWorkerScript {
     public static function signalHandle($signal)
     {
         switch ($signal) {
+            case SIGINT:
+                self::errorLog("SIGINT\n");
+                break;
+
+            case SIGQUIT:
+                self::errorLog("SIGQUIT\n");
+                break;
+
             case SIGTERM:
                 // kill杀死父进程(kill -15优雅的杀死)时 .
                 self::errorLog("某个进程被杀死\n");
